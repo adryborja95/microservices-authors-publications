@@ -1,0 +1,21 @@
+# Java / Spring
+target/
+*.class
+*.log
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
