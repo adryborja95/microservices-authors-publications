@@ -22,6 +22,8 @@ public class PublicationResponseDTO {
 
     private String summary;
 
+    private String content;
+
     private String category;
 
     private TipoPublicacion tipoPublicacion;

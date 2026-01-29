@@ -86,6 +86,7 @@ public class PublicationServiceImpl implements PublicationService {
         dto.setTitle(publication.getTitle());
         dto.setAuthorId(publication.getAuthorId());
         dto.setSummary(publication.getSummary());
+        dto.setContent(publication.getContent());
         dto.setCategory(publication.getCategory());
         dto.setTipoPublicacion(publication.getTipoPublicacion());
         dto.setStatus(publication.getStatus());
