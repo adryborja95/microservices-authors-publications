@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: publications-service  
+
+  datasource:
+    url: jdbc:mysql://db-publications:3306/${MYSQL_DATABASE}
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+server:
+  port: 8082
+
+authors:
+  service:
+    url: http://authors-service:8081

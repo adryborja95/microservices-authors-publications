@@ -6,7 +6,7 @@ target/
 # Node / Frontend
 node_modules/
 dist/
-build/
+.vite/
 
 # IDEs
 .idea/
@@ -19,3 +19,5 @@ Thumbs.db
 
 # Env
 .env
+.env.*
+!.env.example

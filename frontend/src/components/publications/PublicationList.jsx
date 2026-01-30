@@ -17,10 +17,13 @@ import {
   MenuItem,
   Select,
   TextField,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import SearchIcon from "@mui/icons-material/Search";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 
 import {
   getAllPublications,
@@ -66,21 +69,26 @@ const PublicationList = ({ refresh }) => {
   // Publicaciones
   const loadPublications = () => {
     getAllPublications()
-      .then((res) => setPublications(res.data))
-      .catch(() => setError("Error al cargar publicaciones"));
+      .then((res) => {
+        setPublications(res.data || []);
+        setError("");
+      })
+      .catch(() =>
+        setError("No se pudo conectar con el servicio de publicaciones")
+      );
   };
 
   useEffect(() => {
     loadPublications();
   }, [refresh]);
 
-  // Ver solo contenido (tabla)
+  // Ver contenido
   const openContent = (p) => {
     setSelectedPublication(p);
     setContentOpen(true);
   };
 
-  // Ver detalle completo (por ID)
+  // Buscar por ID
   const searchById = async () => {
     if (!searchId.trim()) return;
 
@@ -107,15 +115,27 @@ const PublicationList = ({ refresh }) => {
     setDetailOpen(false);
     setSelectedPublication(null);
     setNewStatus("");
+    setSearchId("");
+  };
+
+  const copyId = () => {
+    navigator.clipboard.writeText(selectedPublication.id);
   };
 
   const confirmStatusChange = async () => {
     try {
-      await changePublicationStatus(selectedPublication.id, newStatus);
-      setSuccessMessage("Estado editorial actualizado correctamente");
-      setTimeout(() => setSuccessMessage(""), 4000);
+      const res = await changePublicationStatus(selectedPublication.id, newStatus);
+      const updatedPublication = res.data;
+
+      setSuccessMessage("Estado editorial actualizado correctamente"); 
+      setTimeout(() => setSuccessMessage(""), 2000);
+
+      setPublications(prev =>
+        prev.map(pub =>
+          pub.id === updatedPublication.id ? updatedPublication : pub
+        )
+      );  
       closeDialogs();
-      loadPublications();
     } catch {
       setError("No se pudo cambiar el estado editorial");
     }
@@ -127,8 +147,17 @@ const PublicationList = ({ refresh }) => {
         Lista de Publicaciones
       </Typography>
 
-      {successMessage && <Alert severity="success" sx={{ mb: 2 }}>{successMessage}</Alert>}
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {successMessage && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          {successMessage}
+        </Alert>
+      )}
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
       {/* BUSCAR POR ID */}
       <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
@@ -163,6 +192,16 @@ const PublicationList = ({ refresh }) => {
         </TableHead>
 
         <TableBody>
+          {publications.length === 0 && !error && (
+            <TableRow>
+              <TableCell colSpan={8} align="center">
+                <Typography color="text.secondary">
+                  No existen publicaciones registradas
+                </Typography>
+              </TableCell>
+            </TableRow>
+          )}
+
           {publications.map((p) => (
             <TableRow key={p.id}>
               <TableCell>{p.title}</TableCell>
@@ -198,14 +237,28 @@ const PublicationList = ({ refresh }) => {
         </TableBody>
       </Table>
 
-      {/* MODAL SOLO CONTENIDO */}
+      {/* MODAL DETALLE */}
       <Dialog open={contentOpen} onClose={closeDialogs} maxWidth="md" fullWidth>
         <DialogTitle>Contenido de la Publicación</DialogTitle>
         <DialogContent dividers>
           {selectedPublication && (
-            <Typography sx={{ whiteSpace: "pre-line" }}>
-              {selectedPublication.content}
-            </Typography>
+            <>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <Typography variant="body2">
+                  <strong>ID:</strong> {selectedPublication.id}
+                </Typography>
+                <Tooltip title="Copiar ID">
+                  <IconButton size="small" onClick={copyId}>
+                    <ContentCopyIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+
+              <Typography sx={{ mt: 2 }}><strong>Contenido:</strong></Typography>
+              <Typography sx={{ whiteSpace: "pre-line" }}>
+                {selectedPublication.content}
+              </Typography>
+            </>
           )}
         </DialogContent>
         <DialogActions>
@@ -213,22 +266,29 @@ const PublicationList = ({ refresh }) => {
         </DialogActions>
       </Dialog>
 
-      {/* MODAL DETALLE COMPLETO (BÚSQUEDA POR ID) */}
+      {/* MODAL DETALLE */}
       <Dialog open={detailOpen} onClose={closeDialogs} maxWidth="md" fullWidth>
-        <DialogTitle>Detalle completo de la Publicación</DialogTitle>
+        <DialogTitle>DEtalle comppleto de la Publicación</DialogTitle>
         <DialogContent dividers>
           {selectedPublication && (
             <>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <Typography variant="body2">
+                  <strong>ID:</strong> {selectedPublication.id}
+                </Typography>
+              </Box>
+
               <Typography><strong>Título:</strong> {selectedPublication.title}</Typography>
               <Typography><strong>Autor:</strong> {authorsMap[selectedPublication.authorId]}</Typography>
               <Typography><strong>Tipo:</strong> {selectedPublication.tipoPublicacion}</Typography>
               <Typography><strong>Categoría:</strong> {selectedPublication.category}</Typography>
-              <Typography sx={{ mt: 1 }}><strong>Resumen:</strong> {selectedPublication.summary}</Typography>
+              <Typography><strong>Resumen:</strong> {selectedPublication.summary}</Typography>
               <Typography sx={{ mt: 2 }}><strong>Contenido:</strong></Typography>
-              <Typography sx={{ whiteSpace: "pre-line" }}>{selectedPublication.content}</Typography>
+              <Typography sx={{ whiteSpace: "pre-line" }}>
+                {selectedPublication.content}
+              </Typography>
               <Typography sx={{ mt: 2 }}><strong>Estado:</strong> {selectedPublication.status}</Typography>
-              <Typography>
-                <strong>Fecha publicación:</strong>{" "}
+              <Typography><strong>Fecha publicación:</strong>{" "}
                 {selectedPublication.publishedAt
                   ? new Date(selectedPublication.publishedAt).toLocaleString()
                   : "-"}
@@ -251,7 +311,9 @@ const PublicationList = ({ refresh }) => {
             onChange={(e) => setNewStatus(e.target.value)}
           >
             {editorialStatuses.map((s) => (
-              <MenuItem key={s} value={s}>{s}</MenuItem>
+              <MenuItem key={s} value={s}>
+                {s}
+              </MenuItem>
             ))}
           </Select>
         </DialogContent>
@@ -267,4 +329,5 @@ const PublicationList = ({ refresh }) => {
 };
 
 export default PublicationList;
+
 
