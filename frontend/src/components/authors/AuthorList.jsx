@@ -12,32 +12,45 @@ import {
   Box,
   Alert,
   TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import SearchIcon from "@mui/icons-material/Search";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 
 const AuthorList = ({ refresh }) => {
   const [authors, setAuthors] = useState([]);
   const [selectedAuthor, setSelectedAuthor] = useState(null);
   const [searchId, setSearchId] = useState("");
   const [error, setError] = useState("");
+  const [openDetail, setOpenDetail] = useState(false);
 
   // Listar autores
   useEffect(() => {
     getAllAuthors()
-      .then((res) => setAuthors(res.data))
-      .catch(() => setError("Error al cargar autores"));
+      .then((res) => {
+        setAuthors(res.data || []);
+        setError("");
+      })
+      .catch(() =>
+        setError("No se pudo conectar con el servicio de autores")
+      );
   }, [refresh]);
 
-  // Ver detalle (desde tabla o búsqueda)
+  // Ver detalle
   const viewDetail = async (id) => {
     try {
       const res = await getAuthorById(id);
       setSelectedAuthor(res.data);
+      setOpenDetail(true);
       setError("");
     } catch {
       setError("No se pudo obtener el detalle del autor");
-      setSelectedAuthor(null);
     }
   };
 
@@ -45,6 +58,16 @@ const AuthorList = ({ refresh }) => {
   const searchById = () => {
     if (!searchId.trim()) return;
     viewDetail(searchId.trim());
+  };
+
+  const closeDialog = () => {
+    setOpenDetail(false);
+    setSelectedAuthor(null);
+    setSearchId("");
+  };
+
+  const copyId = () => {
+    navigator.clipboard.writeText(selectedAuthor.id);
   };
 
   return (
@@ -59,7 +82,7 @@ const AuthorList = ({ refresh }) => {
         </Alert>
       )}
 
-      {/* 🔍 BUSCAR AUTOR POR ID */}
+      {/* BUSCAR POR ID */}
       <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
         <TextField
           fullWidth
@@ -76,7 +99,7 @@ const AuthorList = ({ refresh }) => {
         </Button>
       </Box>
 
-      {/* TABLA DE AUTORES */}
+      {/* TABLA */}
       <Table>
         <TableHead>
           <TableRow>
@@ -91,6 +114,16 @@ const AuthorList = ({ refresh }) => {
         </TableHead>
 
         <TableBody>
+          {authors.length === 0 && !error && (
+            <TableRow>
+              <TableCell colSpan={7} align="center">
+                <Typography color="text.secondary">
+                  No existen autores registrados
+                </Typography>
+              </TableCell>
+            </TableRow>
+          )}
+
           {authors.map((a) => (
             <TableRow key={a.id}>
               <TableCell>
@@ -117,41 +150,39 @@ const AuthorList = ({ refresh }) => {
         </TableBody>
       </Table>
 
-      {/* DETALLE DEL AUTOR */}
-      {selectedAuthor && (
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="h6" gutterBottom>
-            Detalle del Autor
-          </Typography>
+      {/* MODAL DETALLE */}
+      <Dialog open={openDetail} onClose={closeDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>Detalle del Autor</DialogTitle>
 
-          <Typography>
-            <strong>Nombre:</strong> {selectedAuthor.nombre}{" "}
-            {selectedAuthor.apellido}
-          </Typography>
-          <Typography>
-            <strong>Identificación:</strong>{" "}
-            {selectedAuthor.tipoIdentificacion} -{" "}
-            {selectedAuthor.identificacion}
-          </Typography>
-          <Typography>
-            <strong>Nacionalidad:</strong> {selectedAuthor.nacionalidad}
-          </Typography>
-          <Typography>
-            <strong>Email:</strong> {selectedAuthor.email}
-          </Typography>
-          <Typography>
-            <strong>Teléfono:</strong> {selectedAuthor.telefono}
-          </Typography>
-          <Typography>
-            <strong>Género literario:</strong>{" "}
-            {selectedAuthor.generoLiterario}
-          </Typography>
-          <Typography>
-            <strong>Biografía:</strong>{" "}
-            {selectedAuthor.biografia || "No registrada"}
-          </Typography>
-        </Box>
-      )}
+        <DialogContent dividers>
+          {selectedAuthor && (
+            <>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <Typography variant="body2" sx={{ mr: 1 }}>
+                  <strong>ID (UUID):</strong> {selectedAuthor.id}
+                </Typography>
+                <Tooltip title="Copiar ID">
+                  <IconButton size="small" onClick={copyId}>
+                    <ContentCopyIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+
+              <Typography><strong>Nombre:</strong> {selectedAuthor.nombre} {selectedAuthor.apellido}</Typography>
+              <Typography><strong>Identificación:</strong> {selectedAuthor.tipoIdentificacion} - {selectedAuthor.identificacion}</Typography>
+              <Typography><strong>Nacionalidad:</strong> {selectedAuthor.nacionalidad}</Typography>
+              <Typography><strong>Email:</strong> {selectedAuthor.email}</Typography>
+              <Typography><strong>Teléfono:</strong> {selectedAuthor.telefono}</Typography>
+              <Typography><strong>Género literario:</strong> {selectedAuthor.generoLiterario}</Typography>
+              <Typography><strong>Biografía:</strong> {selectedAuthor.biografia || "No registrada"}</Typography>
+            </>
+          )}
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={closeDialog}>Cerrar</Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 };

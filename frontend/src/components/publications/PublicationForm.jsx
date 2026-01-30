@@ -137,7 +137,12 @@ const PublicationForm = ({ onPublicationCreated }) => {
         value={publication.authorId}
         onChange={handleChange}
         error={!!errors.authorId}
-        helperText={errors.authorId}
+        helperText={
+          authors.length ===0
+            ? "Debe crear al menos un autor antes de registrar publicaciones"
+            :errors.authorId
+        }
+        disabled={authors.length === 0}
       >
         {authors.map((a) => (
           <MenuItem key={a.id} value={a.id}>
