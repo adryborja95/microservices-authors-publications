@@ -115,7 +115,7 @@ Esto instalará todas las dependencias necesarias incluyendo React, Material UI,
 4. En los microservicios authors-service y publications-servive se recomienda ejecutarse desde el IDE IntelliJ y correrlo para probar su funcionamiento. 
 
 
-## Para una explicación mas detallada revisar el documento técnico. Este mismo se encuentra en la raiz del proyecto. 
+## Para una explicación mas detallada revisar el documento técnico.
 
 
 
